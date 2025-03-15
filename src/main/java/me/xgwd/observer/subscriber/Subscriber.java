@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 public abstract class Subscriber  {
     Executor executor;
     public Executor executor() {
-        return null;
+        return executor;
     }
     public void setExecutor(Executor executor) {
         this.executor = executor;

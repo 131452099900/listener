@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -18,46 +15,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @date 2025/03/15 12:03
  **/
 public class SingleQueuePublisherSupport implements PublisherSupport, Runnable {
-    public static void main(String[] args) {
-        SingleQueuePublisherSupport support = new SingleQueuePublisherSupport(10, new EventStageBridgeImpl());
-        support.addSubscriber(new SingleEventSubscriber<Event>() {
-            @Override
-            public boolean suit(Event event) {
-                return false;
-            }
-
-            @Override
-            public void onEvent(Event event) {
-                System.out.println(event);
-            }
-
-            @Override
-            public Class<? extends Event> subscribeType() {
-                return TestEvent.class;
-            }
-        });
-
-        support.addSubscriber(new MultiEventSubscriber() {
-            @Override
-            public Set<Class<? extends Event>> subscribeTypes() {
-                ConcurrentHashSet<Class<? extends Event>> objects = new ConcurrentHashSet<>();
-                objects.add(TestEvent.class);
-                objects.add(TestEvent2.class);
-                return objects;
-            }
-
-            @Override
-            public void onEvent(Event event) {
-                System.out.println("multi : " + event);
-            }
-        });
-        TestEvent testEvent = new TestEvent();
-        testEvent.setName("sss");
-        TestEvent2 testEvent2 = new TestEvent2();
-        testEvent2.setName("aaa");
-        support.publish(testEvent);
-        support.publish(testEvent2);
-    }
 
     private BlockingQueue<Event> queue;
     AtomicLong lastID = new AtomicLong(0);
@@ -144,9 +101,11 @@ public class SingleQueuePublisherSupport implements PublisherSupport, Runnable {
         for (Class<? extends Event> eventType : map.keySet()) {
             if (subscribeType.equals(eventType)) {
                 Set<Subscriber> subscribers = map.get(eventType);
+                System.out.println(subscribers.size());
                 for (Subscriber subscriber : subscribers) {
                     // TODO 下沉到策略
                     if (subscriber.ignoreExpireEvent() && lastID.get() > eventId) {
+                        System.out.println("过滤了一条消息拉:" + lastID.get() + " eventId:" + eventId);
                         continue;
                     }
                     notifySubscriber(subscriber, event);

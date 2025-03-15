@@ -31,6 +31,7 @@ public class DefaultPublisher implements Publisher, Runnable {
     public DefaultPublisher(int queueSize) {
         this.queueSize = queueSize;
         queue = new ArrayBlockingQueue<>(queueSize);
+        new Thread(this::run).start();
     }
 
 
